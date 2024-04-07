@@ -1,0 +1,73 @@
+from jira import JIRA
+import matplotlib.pyplot as plt
+import pandas as pd
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+from datetime import datetime, timedelta
+
+# Function to connect to Jira and extract data
+def extract_data():
+    jira = JIRA(server='https://your_jira_instance.com', basic_auth=('username', 'password'))
+    issues = jira.search_issues('project=YOUR_PROJECT AND created >= -7d')
+    return issues
+
+# Function to create graphs
+def create_graph(issues):
+    status_counts = {}
+    for issue in issues:
+        status = issue.fields.status.name
+        status_counts[status] = status_counts.get(status, 0) + 1
+
+    df = pd.DataFrame(list(status_counts.items()), columns=['Status', 'Count'])
+    df.plot(kind='bar', x='Status', y='Count')
+    plt.xlabel('Status')
+    plt.ylabel('Count')
+    plt.title('Weekly Status Report')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig('status_graph.png')
+
+# Function to send email
+def send_email(issues):
+    msg = MIMEMultipart()
+    msg['From'] = 'sender@example.com'
+    msg['To'] = 'recipient@example.com'
+    msg['Subject'] = 'Weekly Status Report'
+
+    # Create email body
+    body = 'Weekly Status Report\n\n'
+    for issue in issues:
+        body += f"Issue: {issue.key}, Status: {issue.fields.status}\n"
+    msg.attach(MIMEText(body))
+
+    # Attach status graph
+    with open('status_graph.png', 'rb') as fp:
+        img = MIMEImage(fp.read())
+    msg.attach(img)
+
+    # Send email
+    smtp_server = 'smtp.example.com'
+    smtp_port = 587
+    smtp_username = 'username'
+    smtp_password = 'password'
+
+    server = smtplib.SMTP(smtp_server, smtp_port)
+    server.starttls()
+    server.login(smtp_username, smtp_password)
+    server.sendmail('sender@example.com', 'recipient@example.com', msg.as_string())
+    server.quit()
+
+def main():
+    # Extract data from Jira
+    issues = extract_data()
+
+    # Create graphs
+    create_graph(issues)
+
+    # Send email with status report and graph
+    send_email(issues)
+
+if __name__ == "__main__":
+    main()
