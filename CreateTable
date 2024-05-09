@@ -1,0 +1,156 @@
+import openpyxl
+from openpyxl.styles import Border, Side, Alignment, Font, PatternFill
+from openpyxl.chart import PieChart, Reference
+from datetime import datetime, timedelta
+
+def generate_status_report_excel():
+    # Create a new workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Status Report"
+
+    # Sample data for the report
+    tasks = ["Task 1", "Task 2", "Task 3", "Task 4"]
+    progress = [80, 60, 90, 70]  # Progress in percentage
+
+    # Write table data
+    ws['A1'] = "Task"
+    ws['B1'] = "Progress"
+    for i, (task, prog) in enumerate(zip(tasks, progress), start=2):
+        ws[f'A{i}'] = task
+        ws[f'B{i}'] = prog
+
+    # Create a pie chart
+    pie = PieChart()
+    labels = Reference(ws, min_col=1, min_row=2, max_row=len(tasks) + 1)
+    data = Reference(ws, min_col=2, min_row=1, max_row=len(tasks) + 1)
+    pie.add_data(data, titles_from_data=True)
+    pie.set_categories(labels)
+    pie.title = "Task Progress"
+
+    # Add chart to worksheet
+    ws.add_chart(pie, "D50")
+
+    # Add thick outside borders from B2 to M60
+    for row in range(2, 61):  # Assuming 60 rows
+        for col in range(2, 14):  # Assuming columns B to M
+            cell = ws.cell(row=row, column=col)
+            if row == 2:  # Top border
+                cell.border = Border(top=Side(style='thick'))
+            if row == 60:  # Bottom border
+                cell.border = Border(bottom=Side(style='thick'))
+            if col == 2:  # Left border
+                cell.border = Border(left=Side(style='thick'))
+            if col == 13:  # Right border
+                cell.border = Border(right=Side(style='thick'))
+
+    # Merge and center cells C4 to L8
+    ws.merge_cells('C4:L8')
+    merge_cell = ws['C4']
+    merge_cell.value = "SIT Daily Status Report"
+    merge_cell.alignment = Alignment(horizontal='right', vertical='center')
+    font = Font(size=18, name='Arial', color='00BFFF')  # Light Blue color
+    merge_cell.font = font
+
+    # Merge and center cells C3 to K3
+    ws.merge_cells('C3:L3')
+    merge_cell = ws['C3']
+    merge_cell.value = datetime.today().strftime("%Y-%m-%d")
+    merge_cell.alignment = Alignment(horizontal='right', vertical='center')
+    font = Font(size=12, name='Arial', color='00BFFF')  # Light Blue color
+    merge_cell.font = font
+
+    # Apply thick outside border to the merged range
+    thick_border = Border(top=Side(style='thick'), bottom=Side(style='thick'), left=Side(style='thick'),
+                          right=Side(style='thick'))
+    for row in ws['C4:L8']:
+        for cell in row:
+            cell.border = thick_border
+
+    # Merge and center cells C10 to D10 with background color
+    ws.merge_cells('C10:D10')
+    merge_cell = ws['C10']
+    merge_cell.value = "Overall Stat"
+    merge_cell.alignment = Alignment(horizontal='left', vertical='center')
+    font = Font(size=12, name='Arial', color='FFFFFF')  # White color
+    merge_cell.font = font
+    purple_fill = PatternFill(start_color="666699", end_color="666699", fill_type="solid")
+    merge_cell.fill = purple_fill
+
+    # Add progress bar to cell E10 based on percentage
+    progress_percentage = 80  # Example percentage
+    progress_fill = None
+    if progress_percentage >= 60:
+        progress_fill = PatternFill(start_color="00FF00", end_color="00FF00", fill_type="solid")  # Green
+    elif progress_percentage < 60 and progress_percentage >= 30:
+        progress_fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")  # Amber
+    else:
+        progress_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")  # Red
+    ws['E10'].fill = progress_fill
+    ws['E10'].value = f"{progress_percentage}%"
+
+    # Merge and center cells F10 to L10 with specified text
+    ws.merge_cells('F10:L10')
+    merge_cell = ws['F10']
+    merge_cell.value = "There is this, there is that, etc. etc."
+    merge_cell.alignment = Alignment(horizontal='center', vertical='center')
+    font = Font(size=12, name='Arial', bold=True)  # Setting bold font
+    merge_cell.font = font
+
+    # Merge and center cells C11 to D13 with background color
+    ws.merge_cells('C11:D13')
+    merge_cell = ws['C11']
+    merge_cell.value = "Status Summary"
+    merge_cell.alignment = Alignment(horizontal='left', vertical='center')
+    merge_font = Font(size=12, name='Arial', bold=True)  # Setting bold font
+    merge_cell.font = merge_font
+    merge_fill = PatternFill(start_color="666699", end_color="666699", fill_type="solid")  # Background color
+    merge_cell.fill = merge_fill
+
+    # Merge and center cells E11 to L13 with wrap text and left center alignment
+    ws.merge_cells('E11:L13')
+    summary_cell = ws['E11']
+    summary_cell.value = "Summary of execution"
+    summary_cell.alignment = Alignment(wrap_text=False, horizontal='left', vertical='center')  # Disable wrap text
+
+    # Add text "On Track" to cell E14
+    ws['E14'].value = "On Track"
+
+    # Merge cells F14 to G14 with text "Start Date" and fill with color
+    ws.merge_cells('F14:G14')
+    start_date_cell = ws['F14']
+    start_date_cell.value = "Start Date"
+    start_date_cell.alignment = Alignment(horizontal='left', vertical='center')
+    start_date_fill = PatternFill(start_color="666699", end_color="666699", fill_type="solid")  # Background color
+    start_date_cell.fill = start_date_fill
+
+    # Add today's date in cell H14
+    today_date = datetime.today().strftime("%Y-%m-%d")
+    ws['H14'].value = today_date
+
+    # Merge cells I14 to J14 with text "End Date" and fill with color
+    ws.merge_cells('I14:J14')
+    end_date_cell = ws['I14']
+    end_date_cell.value = "End Date"
+    end_date_cell.alignment = Alignment(horizontal='left', vertical='center')
+    end_date_fill = PatternFill(start_color="666699", end_color="666699", fill_type="solid")  # Background color
+    end_date_cell.fill = end_date_fill
+
+    # Add tomorrow's date in cell K14
+    tomorrow_date = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+    ws['K14'].value = tomorrow_date
+
+    # Apply thick outside border to cells between C10 and L14
+    for row in range(10, 15):  # Rows from 10 to 14
+        for col in range(3, 13):  # Columns from C to L
+            cell = ws.cell(row=row, column=col)
+            cell.border = thick_border
+            cell.alignment.wrap_text = False  # Disable wrap text
+
+    # Save the workbook
+    excel_filename = "daily_status_report.xlsx"
+    wb.save(excel_filename)
+    print(f"Daily status report generated: {excel_filename}")
+
+if __name__ == "__main__":
+    generate_status_report_excel()
